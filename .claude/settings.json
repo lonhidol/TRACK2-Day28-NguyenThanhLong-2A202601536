@@ -3,7 +3,8 @@
     "allow": [
       "Bash(docker compose *)",
       "Bash(awk '{print $2}')",
-      "Bash(xargs kill -9)"
+      "Bash(xargs kill -9)",
+      "Bash(curl -s \"http://localhost:16686/api/traces?limit=1\")"
     ]
   }
 }
