@@ -1,0 +1,13 @@
+{
+  "description": "Airflow evidence (IP02)",
+  "airflow_url": "http://localhost:8082",
+  "username": "admin",
+  "password": "admin",
+  "dag_name": "lab28_ingestion_pipeline",
+  "services": {
+    "airflow": "healthy",
+    "spark-connect": "available"
+  },
+  "command_to_check": "docker compose ps airflow",
+  "note": "Airflow service is running. DAG run requires manual trigger or integration test."
+}

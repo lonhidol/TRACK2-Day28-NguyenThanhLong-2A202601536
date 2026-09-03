@@ -1,0 +1,32 @@
+{
+  "feedback": {
+    "history": [
+      {
+        "version": 0,
+        "operation": "CREATE TABLE",
+        "timestamp": "2026-09-03T15:48:55.452000+00:00",
+        "metrics": {}
+      }
+    ],
+    "time_travel": {
+      "table": "feedback",
+      "earliest_version": 0,
+      "latest_version": 0,
+      "earliest_rows": 0,
+      "latest_rows": 0,
+      "operations": [
+        "CREATE TABLE"
+      ]
+    }
+  },
+  "documents": {
+    "history": [
+      {
+        "version": 0,
+        "operation": "CREATE TABLE",
+        "timestamp": "2026-09-03T15:48:58.252000+00:00",
+        "metrics": {}
+      }
+    ]
+  }
+}

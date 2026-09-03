@@ -1,0 +1,20 @@
+{
+  "description": "Load profile results from load-tests/run_profile.py against /ready endpoint",
+  "requests": 50,
+  "workers": 4,
+  "status_counts": {
+    "200": 50
+  },
+  "latency_ms": {
+    "p50": 402.6,
+    "p95": 1856.6,
+    "p99": 2852.0
+  },
+  "bottleneck_analysis": {
+    "primary_bottleneck": "Readiness probe checks multiple upstream backends (Kafka, Delta tables, Feast, Qdrant, MLflow) sequentially/concurrently per request",
+    "gateway_rate_limit": "Configured local token bucket rate limit on Gateway (10 req/sec) throttles burst traffic",
+    "cpu_embedding_overhead": "FastEmbed running on host CPU without hardware acceleration increases tail latency under concurrent load",
+    "recommendation": "Cache component readiness status with 5s TTL; offload embeddings to dedicated worker pool"
+  },
+  "note": "Load test completed with 100% success rate (50/50 200 OK)"
+}

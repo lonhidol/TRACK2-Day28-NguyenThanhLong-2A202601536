@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "asker_id": "it-j1-310f1e4f"
+  },
+  "feature_service": "asker_serving_v1",
+  "features": {
+    "schema_version": "1",
+    "asker_id": "it-j1-310f1e4f",
+    "feedback_count": 1,
+    "avg_rating": 4.0,
+    "negative_ratio": 0.0,
+    "last_event_ts": "2026-09-03T15:43:26.754533Z",
+    "delta_version": 0
+  },
+  "statuses": {
+    "asker_id": "PRESENT",
+    "avg_rating": "PRESENT",
+    "delta_version": "PRESENT",
+    "negative_ratio": "PRESENT",
+    "feedback_count": "PRESENT"
+  },
+  "degraded": false,
+  "freshness_seconds": 15.2,
+  "lookup_ms": 14.5
+}

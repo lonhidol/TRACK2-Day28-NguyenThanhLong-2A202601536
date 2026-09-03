@@ -1,0 +1,15 @@
+{
+  "description": "OpenTelemetry trace evidence (IP10)",
+  "jaeger_url": "http://localhost:16686",
+  "collector_endpoint": "http://localhost:4317",
+  "spans_propagated_through": [
+    "HTTP ingestion",
+    "Kafka producer",
+    "Gateway proxy",
+    "API endpoint"
+  ],
+  "trace_format": "W3C traceparent",
+  "example_trace_id": "2d6a19759c19cf2f558f4d312bd4b3e9",
+  "command_to_verify": "curl -s 'http://localhost:16686/api/traces?limit=5' | jq '.'",
+  "note": "Traces are collected by OpenTelemetry collector and forwarded to Jaeger"
+}
