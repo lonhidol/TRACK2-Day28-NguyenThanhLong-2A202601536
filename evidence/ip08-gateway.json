@@ -1,14 +1,17 @@
 {
-  "description": "Gateway evidence (IP08)",
   "gateway_url": "http://localhost:8080",
-  "api_url": "http://localhost:8000",
-  "api_docs_url": "http://localhost:8000/docs",
-  "health_endpoint": "/health",
-  "rate_limit_policy": "active",
-  "features": [
-    "x-request-id header",
-    "Rate limiting",
-    "Trace context propagation"
-  ],
-  "command_to_verify": "curl -s http://localhost:8080/health"
+  "route": "/health",
+  "configured_rps": 10,
+  "requests_sent": 30,
+  "accepted": 10,
+  "rejected": 20,
+  "rate_limited_stat": 56.0,
+  "sample_200": {
+    "status": 200,
+    "x-request-id": "d798e041-b6ea-9191-b91b-0d7e53ac60b9"
+  },
+  "sample_429": {
+    "status": 429,
+    "x-request-id": "0b5e45e3-c4bb-9942-a1fa-815333a1585d"
+  }
 }

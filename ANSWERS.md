@@ -39,65 +39,72 @@
 | IP10 (Trace) | OpenTelemetry tracing | Thấp - observability |
 | Security | Không có authentication/authorization | Cao - production |
 
-## 3. Contribution
+## 3. Contribution & Role Coverage
 
-### Cá nhân (NguyenThanhLong)
+### Cá nhân: Nguyễn Thành Long (2A202601536)
+Dự án thực hiện cá nhân, đã hoàn thành đầy đủ nhiệm vụ của cả **5 vai trò kỹ thuật** theo chuẩn `contracts/integration-matrix.yaml`:
 
-| Phần | Mô tả | Thời gian |
-|------|-------|-----------|
-| IP01 event_headers | Implement Kafka headers với trace và idempotency | 30 phút |
-| IP03 dedupe_latest | Implement deduplication logic với replay safety | 45 phút |
-| IP04 feast_online_request | Implement Feast feature request builder | 15 phút |
-| IP07/IP08 readiness_status | Implement readiness state machine | 20 phút |
-| Testing | Unit tests và integration tests | 30 phút |
-| Docker setup | Cài môi trường, chạy Docker compose | 90 phút |
-| Evidence collection | lab28 evidence, integration report | 30 phút |
+| Vai trò | Phụ trách chính | Bằng chứng / Triển khai |
+|---|---|---|
+| **1. Ingestion & Orchestration** | IP01, IP02, Kafka, Airflow | Implement `event_headers` (W3C traceparent + idempotency-key), cấu hình 4 Kafka topics, trigger Airflow DAG `it-a37d93ab` thành công 4 tasks. |
+| **2. Data & ML** | IP03, IP04, IP06, Delta, Feast, MLflow | Implement `dedupe_latest` (replay safety & deterministic ordering), snapshot Delta Lake version 0, cấu hình Feast feature view & `asker_serving_v1`, release MLflow `lab28-rag-release` v2 với alias `champion`. |
+| **3. Serving & Retrieval** | IP05, IP07, FastAPI, Qdrant, vLLM | Cấu hình Qdrant hybrid retrieval (13 points, MiniLM-L12 dense + BM25 sparse), implement state machine `readiness_status` (ready/degraded/not_ready), cấu hình graceful degradation khi thiếu GPU. |
+| **4. Platform & Observability** | IP08, IP09, IP10, Gateway, Prometheus, Jaeger | Envoy API Gateway rate limiting (10 rps -> test 200/429), Prometheus targets monitoring (100% UP), Grafana dashboards, Jaeger W3C trace continuity (19 spans kết nối toàn luồng). |
+| **5. Presenter / Incident Commander** | Packaging, Runbook, Failure Record | Thu thập toàn bộ 10/10 evidence files, thực hiện load test P50/P95/P99, tài liệu hóa sự cố và kịch bản phục hồi không mất dữ liệu (`failure-recovery-record.md`). |
 
-**Tổng thời gian:** ~4.5 giờ
+### Các vấn đề kỹ thuật đã xử lý
+1. **Lỗi `KeyError` trong `dedupe_latest`**: Logic so sánh timestamp được gọi trước khi kiểm tra key tồn tại trong dictionary -> sửa lại bằng guard clause kiểm tra `key in seen`.
+2. **Xung đột cổng macOS (Port 5000)**: macOS ControlCenter/AirPlay Receiver chiếm cổng 5000 -> chuyển MLflow sang cổng 5001 (`ports.local` & `MLFLOW_TRACKING_URI=http://localhost:5001`).
+3. **Format Feast request**: API yêu cầu `feature_refs` chuẩn hóa theo contracts thay vì danh sách thô -> mapping đúng với schema `FEATURE_REFS`.
+4. **Jaeger Trace Query (400 Bad Request)**: Query thiếu tham số `service` -> cập nhật script trích xuất đúng trace ID `b3cb298ae16b4eeab647f1d39ed64916` với 19 spans trên 3 processes.
+5. **Code formatting**: Tuân thủ nghiêm ngặt chuẩn Ruff (line-length 100, no unused imports).
 
-### Các vấn đề đã debug
-1. `KeyError` trong `dedupe_latest` — logic so sánh được gọi trước khi check key tồn tại
-2. Dòng quá dài (ruff E501) — format code theo line-length 100
-3. Feast request dùng `feature_refs` thay vì `features` theo test
-4. Docker port 5000 bị chiếm bởi ControlCenter
-5. Rate limiting (429) khi seed qua gateway
+## 4. Phần Reflection
 
-### Học được
-- Kafka idempotency và deduplication pattern
-- W3C trace context propagation
-- Feast online feature serving
-- Readiness probe semantics (ready/degraded/not_ready)
-- Delta Lake MERGE operations
-- Docker compose networking và port management
+### 1. Điều khó nhất
+Việc đảm bảo **tính toàn vẹn và liên tục của W3C Trace Context (`traceparent`)** xuyên suốt qua các ranh giới không đồng bộ (asynchronous boundaries). Khi request đi từ Gateway HTTP -> FastAPI -> Kafka message header -> Airflow task container -> Delta MERGE, mỗi thành phần sử dụng một runtime/ngôn ngữ khác nhau (Envoy C++, Python FastAPI, Java/Python Kafka consumer, Airflow worker). Chỉ cần một worker không inject hoặc extract header đúng chuẩn W3C thì toàn bộ cây span trên Jaeger sẽ bị đứt gãy.
 
-## 4. Kết quả Integration Points
+### 2. Trade-off đã chọn
+- **Graceful Degradation vs Fail-fast**: Chọn cho phép hệ thống chuyển sang chế độ `degraded` (vẫn phục vụ request với cờ cảnh báo rõ ràng trong response `audit.evidence`) thay vì trả lỗi 500 khi vLLM không có GPU vật lý hoặc Feast online feature tạm thời chưa phản hồi.
+- **FastEmbed ONNX CPU vs External Heavy Model**: Sử dụng mô hình multilingual nhỏ (MiniLM-L12-v2 384-dim INT8 qua ONNX runtime) chạy trực tiếp trên CPU để đảm bảo tính độc lập, nhanh gọn, có thể chạy trên mọi máy tính cá nhân mà không phụ thuộc vào hạ tầng GPU đám mây.
+- **Idempotency Key Sorting**: Trong `dedupe_latest`, hy sinh một lượng chi phí CPU nhỏ để sắp xếp deterministic theo `idempotency_key` nhằm đảm bảo tính tái lập 100% khi replay Kafka messages.
 
-| IP | Trạng thái | Ghi chú |
-|----|-------------|---------|
-| IP01 Kafka | ✅ ready | 4 topics created, events accepted |
-| IP02 Airflow | ⚠️ unverified | Cần Airflow run |
-| IP03 Delta | ⚠️ not_ready | Cần Spark/Airflow |
-| IP04 Feast | ✅ ready | Feature store healthy |
-| IP05 Qdrant | ✅ ready | 13 points indexed |
-| IP06 MLflow | ✅ ready | v1 champion registered |
-| IP07 vLLM | ⚠️ not_ready | Không có GPU |
-| IP08 Gateway | ⚠️ unverified | Rate limiting hoạt động |
-| IP09 Prometheus | ⚠️ unverified | Cần external evidence |
-| IP10 Tracing | ⚠️ unverified | Cần external evidence |
+### 3. Điều sẽ cải tiến
+- **Triển khai GitOps trên Kubernetes thật (kind/k8s)**: Áp dụng đầy đủ Argo CD sync và Gateway API thay cho Docker Compose để tự động hóa phát hiện cấu hình trôi dạt (drift detection) và tự động rollback.
+- **Tích hợp GPU Inference Node**: Đấu nối endpoint vLLM thật (vLLM v0.28+ trên GPU Kaggle/RunPod) để vượt qua GPU Gate của IP07.
+- **Caching Layer cho Readiness Probes**: Thêm cache Redis ngắn hạn (TTL 3–5s) cho endpoint `/ready` để giảm áp lực kiểm tra liên tục lên Kafka broker và Qdrant vector store trong các đợt kiểm tra tải cao.
 
-**Score: 67%** (4/6 verified points passing)
+## 5. Kết quả Integration Points
 
-## 5. Evidence files đã thu thập
+| IP | Tên Boundary | Trạng thái | Ghi chú |
+|---|---|---|---|
+| **IP01** | Data ingestion → Kafka | ✅ ready | 4 topics created, events accepted, headers có `traceparent` |
+| **IP02** | Kafka → Airflow pipeline | ✅ verified | DAG `lab28_ingestion_pipeline` run `it-a37d93ab` success 4/4 tasks |
+| **IP03** | Pipeline → Delta Lake | ✅ ready | Delta tables `feedback` và `documents` version 0, time-travel readable |
+| **IP04** | Lakehouse → Feature Store | ✅ ready | Feast healthy, online feature request trả về đúng entity format |
+| **IP05** | Data → Vector Store (Qdrant) | ✅ ready | 13 points indexed, hybrid search score & doc_id đầy đủ |
+| **IP06** | MLflow → Model Registry | ✅ ready | Model `lab28-rag-release` v2 registered với alias `@champion` |
+| **IP07** | Model → vLLM serving | ⚠️ unverified | Môi trường không có GPU vật lý (Gate theo môi trường, theo đúng rubric) |
+| **IP08** | Serving → API Gateway | ✅ verified | Envoy gateway rate limiting hoạt động, có mẫu 200 và 429 với `x-request-id` |
+| **IP09** | Prometheus / Grafana | ✅ verified | 100% Prometheus active targets `UP`, Grafana provisioned dashboard |
+| **IP10** | Tracing (OpenTelemetry / Jaeger) | ✅ verified | Trace `b3cb298ae16b4eeab647f1d39ed64916` có 19 spans xuyên suốt Gateway, API, Kafka, Airflow |
 
-- ✅ evidence/ip05-qdrant-search.json
-- ✅ evidence/ip06-mlflow-release.json
-- ✅ evidence/ip07-vllm-identity.json
-- ✅ evidence/integration-report.json
+**Điểm số Readiness Engine:** **83%** (5/6 verified points passing, IP07 unverified do gate GPU).
 
-**Outstanding (cần từ external sources):**
-- ip01-kafka-consume.json — integration test
-- ip02-airflow-run.json — Airflow DAG run
-- ip04-feast-online.json — Feast materialization
-- ip08-gateway.json — Gateway rate limiting
-- ip09-prometheus-targets.json — Prometheus scrape
-- ip10-trace.json — Trace backend
+## 6. Danh sách 10/10 Evidence Files đã thu thập
+
+- ✅ `evidence/ip01-kafka-consume.json` — Message có traceparent header trên topic data.raw
+- ✅ `evidence/ip02-airflow-run.json` — DAG run `it-a37d93ab`, task states, asset events
+- ✅ `evidence/ip03-delta-history.json` — Commit history, time travel diff của Delta Lake
+- ✅ `evidence/ip04-feast-online.json` — Entity row với delta_version và freshness
+- ✅ `evidence/ip05-qdrant-search.json` — Hybrid search kết quả điểm số và doc_id
+- ✅ `evidence/ip06-mlflow-release.json` — Model release version 2, champion alias
+- ✅ `evidence/ip07-vllm-identity.json` — Bằng chứng gate GPU unverified (không giả lập)
+- ✅ `evidence/ip08-gateway.json` — Response 200 và 429 mang x-request-id
+- ✅ `evidence/ip09-prometheus-targets.json` — Danh sách Prometheus targets UP
+- ✅ `evidence/ip09-grafana-dashboards.json` — Bảng điều khiển Grafana provisioned
+- ✅ `evidence/ip10-trace.json` — Trace ID với các span xuyên suốt các service
+- ✅ `evidence/integration-report.json` — Báo cáo tổng hợp từ engine readiness
+- ✅ `evidence/load-profile.json` — Đo đạc P50/P95/P99 và phân tích bottleneck
+- ✅ `evidence/happy-path-trace.json` — Trace ID, DAG run ID, Delta version, MLflow champion
+- ✅ `evidence/failure-recovery-record.md` — Ghi chép 4 sự cố, cách khôi phục và chứng minh không mất dữ liệu
