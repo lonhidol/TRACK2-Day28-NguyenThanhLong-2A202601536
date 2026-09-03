@@ -1,0 +1,19 @@
+{
+  "description": "Happy-path trace evidence",
+  "mlflow": {
+    "model_name": "lab28-rag-release",
+    "version": "1",
+    "run_id": "b1a441b9d31c47ffb2b1977c9c8a97c2",
+    "alias": "champion"
+  },
+  "delta": {
+    "version": null,
+    "note": "Delta tables require Airflow DAG run to be created"
+  },
+  "trace_id_sample": "9359005286f5bc187a486de9d176eaa0",
+  "events_accepted": {
+    "documents": 13,
+    "feedback": 12
+  },
+  "note": "Happy path trace from ingestion to serving with MLflow champion"
+}

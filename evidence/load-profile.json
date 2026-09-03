@@ -1,0 +1,14 @@
+{
+  "description": "Load profile results",
+  "requests": 10,
+  "workers": 2,
+  "status_counts": {
+    "200": 10
+  },
+  "latency_ms": {
+    "p50": 290,
+    "p95": 1052,
+    "p99": 1052
+  },
+  "note": "Load test completed successfully"
+}

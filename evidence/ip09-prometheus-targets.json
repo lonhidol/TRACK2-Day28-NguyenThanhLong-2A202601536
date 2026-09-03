@@ -1,0 +1,18 @@
+{
+  "description": "Prometheus targets evidence (IP09)",
+  "dashboard_url": "http://localhost:9090/targets",
+  "targets": [
+    {"job": "lab28-airflow-batch", "health": "up"},
+    {"job": "lab28-api", "health": "up"},
+    {"job": "lab28-collector", "health": "up"},
+    {"job": "lab28-feast", "health": "up"},
+    {"job": "lab28-gateway", "health": "up"},
+    {"job": "lab28-kafka", "health": "up"},
+    {"job": "lab28-mlflow", "health": "up"},
+    {"job": "lab28-prometheus", "health": "up"},
+    {"job": "lab28-qdrant", "health": "up"},
+    {"job": "lab28-vllm-optional", "health": "down", "note": "Expected - no GPU available"}
+  ],
+  "grafana_url": "http://localhost:3000",
+  "command_to_verify": "curl -s http://localhost:9090/api/v1/targets | jq '.'"
+}

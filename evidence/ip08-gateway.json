@@ -1,0 +1,14 @@
+{
+  "description": "Gateway evidence (IP08)",
+  "gateway_url": "http://localhost:8080",
+  "api_url": "http://localhost:8000",
+  "api_docs_url": "http://localhost:8000/docs",
+  "health_endpoint": "/health",
+  "rate_limit_policy": "active",
+  "features": [
+    "x-request-id header",
+    "Rate limiting",
+    "Trace context propagation"
+  ],
+  "command_to_verify": "curl -s http://localhost:8080/health"
+}
